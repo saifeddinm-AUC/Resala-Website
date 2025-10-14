@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resala Organization</title>
+    <style>
+        /* Basic Styling (mostly unchanged) */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Animation Classes (unchanged) */
+        .fade-in {
+            animation: fadeIn 1s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-in;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .shake {
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            animation: fadeIn 2s;
+        }
+        
+        nav a {
+            margin: 0 15px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .container {
+            padding: 20px;
+        }
+        
+        /* Student Management Section */
+        #student-form {
+            margin-bottom: 20px;
+            animation: slideIn 1s;
+        }
+        
+        #filters {
+            margin-bottom: 10px;
+            animation: fadeIn 1s;
+        }
+        
+        #student-table {
+            width: 100%;
+            border-collapse: collapse;
+            animation: fadeIn 1s;
+        }
+        
+        #student-table th, #student-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        #student-table tr.highlight {
+            background-color: red;
+            color: white;
+            animation: shake 0.5s;
+        }
+        
+        /* Classes Section (unchanged) */
+        .class-box {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            animation: slideIn 1s;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Resala Organization</h1>
+        <p>Bringing kids to learn English, Skills, and Math across 5 classes!</p>
+        <nav>
+            <a href="#students">Student Management</a>
+            <a href="#classes">Classes & Notes</a>
+        </nav>
+    </header>
+    
+    <div class="container" id="students">
+        <h2>Student Management</h2>
+        <form id="student-form">
+            <input type="text" id="student-name" placeholder="Student Name" required>
+            <select id="student-level" onchange="updateClassOptions()">
+                <option value="1">Level 1</option>
+                <option value="2">Level 2</option>
+                <option value="3">Level 3</option>
+            </select>
+            <select id="student-class">
+                <option value="">Select Class</option> <!-- Options will be updated dynamically -->
+            </select>
+            <button type="submit">Add Student</button>
+        </form>
+        
+        <div id="filters">
+            <label>Filter by Level: </label>
+            <select id="filter-level" onchange="renderStudents()">
+                <option value="all">All Levels</option>
+                <option value="1">Level 1</option>
+                <option value="2">Level 2</option>
+                <option value="3">Level 3</option>
+            </select>
+            <label>Filter by Class: </label>
+            <select id="filter-class" onchange="renderStudents()">
+                <option value="all">All Classes</option>
+                <option value="1">Class 1</option>
+                <option value="2">Class 2</option>
+                <option value="3">Class 3</option>
+                <option value="4">Class 4</option>
+                <option value="5">Class 5</option>
+            </select>
+        </div>
+        
+        <table id="student-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Level</th>
+                    <th>Class</th>
+                    <th>Positive Points</th>
+                    <th>Negative Points</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="student-list">
+                <!-- Students will be added here dynamically -->
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="container" id="classes">
+        <h2>Classes and Notes</h2>
+        <div class="class-box">
+            <h3>Class 1 (Level 1)</h3>
+            <textarea id="notes-class1" placeholder="Enter notes for Class 1..."></textarea>
+        </div>
+        <div class="class-box">
+            <h3>Class 2 (Level 1)</h3>
+            <textarea id="notes-class2" placeholder="Enter notes for Class 2..."></textarea>
+        </div>
+        <div class="class-box">
+            <h3>Class 3 (Level 2)</h3>
+            <textarea id="notes-class3" placeholder="Enter notes for Class 3..."></textarea>
+        </div>
+        <div class="class-box">
+            <h3>Class 4 (Level 2)</h3>
+            <textarea id="notes-class4" placeholder="Enter notes for Class 4..."></textarea>
+        </div>
+        <div class="class-box">
+            <h3>Class 5 (Level 3)</h3>
+            <textarea id="notes-class5" placeholder="Enter notes for Class 5..."></textarea>
+        </div>
+    </div>
+    
+    <script>
+        // Load data from localStorage
+        let students = JSON.parse(localStorage.getItem('students')) || [];
+        
+        // Ensure backward compatibility
+        students = students.map(student => ({
+            ...student,
+            class: student.class || 1  // Default to 1 if not present
+        }));
+        
+        let notes = JSON.parse(localStorage.getItem('notes')) || {
+            'class1': '',
+            'class2': '',
+            'class3': '',
+            'class4': '',
+            'class5': ''
+        };
+        
+        // Load notes into textareas (unchanged)
+        document.getElementById('notes-class1').value = notes.class1;
+        document.getElementById('notes-class2').value = notes.class2;
+        document.getElementById('notes-class3').value = notes.class3;
+        document.getElementById('notes-class4').value = notes.class4;
+        document.getElementById('notes-class5').value = notes.class5;
+        
+        // Save notes on change (unchanged)
+        function saveNotes() {
+            notes.class1 = document.getElementById('notes-class1').value;
+            notes.class2 = document.getElementById('notes-class2').value;
+            notes.class3 = document.getElementById('notes-class3').value;
+            notes.class4 = document.getElementById('notes-class4').value;
+            notes.class5 = document.getElementById('notes-class5').value;
+            localStorage.setItem('notes', JSON.stringify(notes));
+        }
+        
+        document.querySelectorAll('textarea').forEach(textarea => {
+            textarea.addEventListener('input', saveNotes);
+        });
+        
+        // Function to update class options based on selected level
+        function updateClassOptions() {
+            const levelSelect = document.getElementById('student-level');
+            const classSelect = document.getElementById('student-class');
+            const level = levelSelect.value;
+            classSelect.innerHTML = '<option value="">Select Class</option>';  // Reset options
+            
+            let availableClasses = [];
+            if (level == 1) availableClasses = [1, 2];
+            else if (level == 2) availableClasses = [3, 4];
+            else if (level == 3) availableClasses = [5];
+            
+            availableClasses.forEach(cls => {
+                const option = document.createElement('option');
+                option.value = cls;
+                option.text = `Class ${cls}`;
+                classSelect.appendChild(option);
+            });
+        }
+        
+        // Render students table with filtering
+        function renderStudents() {
+            const filterLevel = document.getElementById('filter-level').value;
+            const filterClass = document.getElementById('filter-class').value;
+            
+            let filteredStudents = students.filter(student => {
+                const levelMatch = filterLevel === 'all' || student.level == filterLevel;
+                const classMatch = filterClass === 'all' || student.class == filterClass;
+                return levelMatch && classMatch;
+            });
+            
+            const studentList = document.getElementById('student-list');
+            studentList.innerHTML = '';
+            filteredStudents.forEach((student, index) => {
+                const globalIndex = students.indexOf(student);  // Get original index for actions
+                const row = document.createElement('tr');
+                if (student.negativePoints >= 5) {
+                    row.classList.add('highlight');
+                }
+                row.innerHTML = `
+                    <td>${student.name}</td>
+                    <td>Level ${student.level}</td>
+                    <td>Class ${student.class}</td>
+                    <td>${student.positivePoints}</td>
+                    <td>${student.negativePoints}</td>
+                    <td>
+                        <button onclick="addPositive(${globalIndex})">Add Positive</button>
+                        <button onclick="removePositive(${globalIndex})">Remove Positive</button>
+                        <button onclick="addNegative(${globalIndex})">Add Negative</button>
+                        <button onclick="removeNegative(${globalIndex})">Remove Negative</button>
+                        <button onclick="upLevel(${globalIndex})">Up-Level</button>
+                        <button onclick="downLevel(${globalIndex})">Down-Level</button>
+                        <button onclick="removeStudent(${globalIndex})">Remove</button>
+                    </td>
+                `;
+                studentList.appendChild(row);
+            });
+            localStorage.setItem('students', JSON.stringify(students));
+        }
+        
+        renderStudents();  // Initial render
+        
+        // Form submission
+        document.getElementById('student-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('student-name').value;
+            const level = document.getElementById('student-level').value;
+            const cls = document.getElementById('student-class').value;  // Get class value
+            if (!cls) {
+                alert('Please select a class!');
+                return;
+            }
+            students.push({ name, level: parseInt(level), class: parseInt(cls), positivePoints: 0, negativePoints: 0 });
+            renderStudents();
+            document.getElementById('student-name').value = '';  // Clear form
+            document.getElementById('student-class').value = '';  // Clear class
+        });
+        
+        // Existing functions (unchanged)
+        function upLevel(index) { /* ... */ }  // Omitted for brevity, as in previous response
+        function downLevel(index) { /* ... */ }
+        function addPositive(index) { /* ... */ }
+        function removePositive(index) { /* ... */ }
+        function addNegative(index) { /* ... */ }
+        function removeNegative(index) { /* ... */ }
+        
+        // Remove Student function
+        function removeStudent(index) {
+            students.splice(index, 1);  // Remove from array
+            renderStudents();  // Re-render
+        }
+    </script>
+</body>
+</html>
